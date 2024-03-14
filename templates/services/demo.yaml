@@ -1,0 +1,71 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.mysql.config.name }}-configmap
+  namespace: {{ .Release.Namespace }}
+data:
+  SPRING_PROFILES_ACTIVE: {{ .Values.spring.profiles.active }}
+  MYSQL_HOST: {{ .Values.mysql.HOST }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.services.demo.name }}
+  name: {{ .Values.services.demo.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.services.demo.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.demo.name }}
+    spec:
+      containers:
+        - image: {{ .Values.docker.services.demo.images }}
+          name: {{ .Values.docker.services.demo.name }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.mysql.config.name }}-secret
+            - configMapRef:
+                name: {{ .Values.mysql.config.name }}-configmap
+#          resources:
+#            requests:
+#              memory: "2Gi"
+#              cpu: "2"
+#            limits:
+#              memory: "2Gi"
+#              cpu: "2"
+          # 准备检查，通过则接入流量
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.services.demo.health.path }}
+              port: {{ .Values.services.demo.health.port }}
+          # 活力检查，不通过时重启容器
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.services.demo.health.path }}
+              port: {{ .Values.services.demo.health.port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: demo
+  name: {{ .Values.services.demo.name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: {{ .Values.services.demo.health.path }}
+    alb.ingress.kubernetes.io/healthcheck-port: '{{ .Values.services.demo.health.port }}'
+spec:
+  ports:
+    - name: http
+      port: {{ .Values.services.demo.port }}
+      targetPort: {{ .Values.services.demo.port }}
+  selector:
+    app: {{ .Values.services.demo.name }}
+  type: ClusterIP
+

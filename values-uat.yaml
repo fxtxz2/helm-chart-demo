@@ -1,0 +1,15 @@
+replicas: 1
+spring:
+  profiles:
+    active: uat
+mysql:
+  config:
+    name: mysql
+  HOST: xxxx-uat.xxxxx.us-east-1.rds.amazonaws.com
+  DB_USERNAME: bXl1c2VybmFtZQ==
+  DB_PASSWORD: bXlwYXNzd29yZA==
+docker:
+  services:
+    demo:
+      images: xxxxxxx.dkr.ecr.us-east-1.amazonaws.com/demo:latest
+      name: demo

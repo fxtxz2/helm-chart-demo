@@ -1,0 +1,11 @@
+ingress:
+  security:
+    groups: cloudfront-only
+services:
+  demo:
+    name: demo
+    port: 8080
+    path: /api/demo
+    health:
+      path: /actuator/health
+      port: 8081
