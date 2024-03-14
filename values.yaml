@@ -9,3 +9,10 @@ services:
     health:
       path: /actuator/health
       port: 8081
+  demo2:
+    name: demo2
+    port: 8080
+    path: /api/demo2
+    health:
+      path: /actuator/health
+      port: 8081

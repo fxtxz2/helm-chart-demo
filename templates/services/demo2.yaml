@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.services.demo2.name }}
+  name: {{ .Values.services.demo2.name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.services.demo2.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.services.demo2.name }}
+    spec:
+      containers:
+        - image: {{ .Values.docker.services.demo2.images }}
+          name: {{ .Values.docker.services.demo2.name }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.mysql.config.name }}-secret
+            - configMapRef:
+                name: {{ .Values.services.demo2.name }}-configmap
+#          resources:
+#            requests:
+#              memory: "2Gi"
+#              cpu: "2"
+#            limits:
+#              memory: "2Gi"
+#              cpu: "2"
+          # 准备检查，通过则接入流量
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.services.demo2.health.path }}
+              port: {{ .Values.services.demo2.health.port }}
+          # 活力检查，不通过时重启容器
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.services.demo2.health.path }}
+              port: {{ .Values.services.demo2.health.port }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: {{ .Values.services.demo2.name }}
+  name: {{ .Values.services.demo2.name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    alb.ingress.kubernetes.io/healthcheck-path: {{ .Values.services.demo2.health.path }}
+    alb.ingress.kubernetes.io/healthcheck-port: '{{ .Values.services.demo2.health.port }}'
+spec:
+  ports:
+    - name: http
+      port: {{ .Values.services.demo2.port }}
+      targetPort: {{ .Values.services.demo2.port }}
+  selector:
+    app: {{ .Values.services.demo2.name }}
+  type: ClusterIP
+
