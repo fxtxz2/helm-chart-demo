@@ -35,11 +35,6 @@ spec:
             httpGet:
               path: {{ .Values.services.demo.health.path }}
               port: {{ .Values.services.demo.health.port }}
-          # 活力检查，不通过时重启容器
-          livenessProbe:
-            httpGet:
-              path: {{ .Values.services.demo.health.path }}
-              port: {{ .Values.services.demo.health.port }}
 ---
 apiVersion: v1
 kind: Service
